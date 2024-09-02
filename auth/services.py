@@ -64,7 +64,7 @@ class DatabaseOperations:
         if results is None:
             raise UserNotFound
 
-        return UserCredentials(username=results[1], password=results[0])
+        return UserCredentials(username=results[0], password=results[1])
     
 
     async def add_user(self, user: Users):
@@ -102,6 +102,17 @@ class AuthOperations:
     async def authenticate_user(username: str, plain_text_password: str, db_ops: DatabaseOperations):
         """
         Authenticates user credentials
+        
+        Arguments:
+        ----------
+        - `username`: username value from Login form
+        - `plain_text_password`: password value from Login form
+        - `db_ops`: instance of DatabaseOperations
+        
+        Returns:
+        --------
+        - `username`: User's username stored in Database
+        - `auth_secret`: Random Secret key
         """
         # retrieve the user's credentials
         user_credentials = await db_ops.get_user_credentials(username)
@@ -125,8 +136,8 @@ class AuthOperations:
         ----------
         - `encoding_data`: A dict object that will be encoded in the token
         """
-        encoding_data.update({'expiration': datetime.now() + timedelta(minutes=EXPIRY_MINUTES)})
-        token = jwt.encode(encoding_data, SECRET_KEY, ALGORITHM)
+        # encoding_data.update({'expiration': datetime.now() + timedelta(minutes=EXPIRY_MINUTES)})
+        token = jwt.encode(encoding_data, key=SECRET_KEY, algorithm=ALGORITHM)
         return Token(access_token=token, token_type='bearer')
 
 

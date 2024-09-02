@@ -23,14 +23,13 @@ PREFIX = "/auth"
 router = APIRouter(
     prefix = PREFIX,
     tags = ['Authentication'],
-    lifespan=lifespan,
-    default_response_class=PlainTextResponse
+    lifespan=lifespan
 )   
 
 oauth_bearer = OAuth2PasswordBearer(tokenUrl=f"{PREFIX}/token")
 
 
-@router.post('/create', status_code=status.HTTP_201_CREATED)
+@router.post('/create', response_class=PlainTextResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(form_data: UserCredentials, db_ops: Annotated[DatabaseOperations, Depends()]):
     # check if user already exists
     found_user = await db_ops.search_user(form_data.username)
@@ -64,6 +63,6 @@ async def generate_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends
     return token
 
 
-@router.get('/me')
+@router.get('/me', response_class=PlainTextResponse)
 async def whoami(token: Annotated[str, Depends(oauth_bearer)]):
     return AuthOperations.get_current_user(token)
