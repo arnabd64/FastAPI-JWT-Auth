@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -6,47 +7,63 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from core.exceptions import *
 
-from .schema import CurrentUserResponse, Token, User, UserLoginForm
-from .services import (authenticate_user, create_token, encrypt_password,
-                       get_current_user)
+from .database import create_tables
+from .schema import Token, UserCredentials, Users
+from .services import AuthOperations, DatabaseOperations
 
-USERS: list[User] = []
+
+@asynccontextmanager
+async def lifespan(_app):
+    await create_tables()
+    yield
+
+
 PREFIX = "/auth"
 
 router = APIRouter(
     prefix = PREFIX,
-    tags = ['Authentication']
-)
+    tags = ['Authentication'],
+    lifespan=lifespan,
+    default_response_class=PlainTextResponse
+)   
 
 oauth_bearer = OAuth2PasswordBearer(tokenUrl=f"{PREFIX}/token")
 
 
-@router.post('/create', response_class=PlainTextResponse, status_code=status.HTTP_201_CREATED)
-async def create_user(form_data: UserLoginForm):
+@router.post('/create', status_code=status.HTTP_201_CREATED)
+async def create_user(form_data: UserCredentials, db_ops: Annotated[DatabaseOperations, Depends()]):
     # check if user already exists
-    for _user in USERS:
-        if _user.username == form_data.username:
-            raise UserExists
-        
+    found_user = await db_ops.search_user(form_data.username)
+    if found_user:
+        raise UserExists
+
     # create an user from the form data
-    user = User(
+    user = Users(
         username = form_data.username,
-        password = encrypt_password(form_data.password)
+        password = AuthOperations.encrypt_password(form_data.password)
     )
 
     # add to database
-    USERS.append(user)
+    await db_ops.add_user(user)
 
     return user.id
 
 
 @router.post('/token', response_model=Token, status_code=status.HTTP_201_CREATED)
-async def generate_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user = authenticate_user(form_data.username, form_data.password, USERS)
-    token = create_token(user['username'], user['id'], expiry_minutes=30)
-    return Token(access_token=token, token_type='bearer')
+async def generate_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db_ops: Annotated[DatabaseOperations, Depends()]):
+    # authenticate user
+    auth_data = await AuthOperations.authenticate_user(
+        username = form_data.username,
+        plain_text_password = form_data.password,
+        db_ops = db_ops
+    )
+
+    # use auth data to generate token
+    token = AuthOperations.create_auth_token(auth_data)
+
+    return token
 
 
-@router.get('/me', response_model=CurrentUserResponse)
+@router.get('/me')
 async def whoami(token: Annotated[str, Depends(oauth_bearer)]):
-    return get_current_user(token)
+    return AuthOperations.get_current_user(token)

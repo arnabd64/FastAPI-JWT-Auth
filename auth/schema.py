@@ -1,30 +1,24 @@
 from datetime import datetime
-from typing import Annotated, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from sqlmodel import Field, SQLModel
 from ulid import ULID
 
 current_timestamp = lambda: datetime.now()
-user_id_generator = lambda: ULID().hex
+uid_generator = lambda: ULID().hex
 
-class UserLoginForm(BaseModel):
+class Users(SQLModel, table=True):
+    __tablename__ = 'users'
+
+    id: str = Field(default_factory=uid_generator, primary_key=True)
+    username: str = Field(unique=True)
+    password: str = Field()
+    created_on: datetime = Field(default_factory=current_timestamp)
+
+class UserCredentials(BaseModel):
 
     username: str
     password: str
-
-
-class CurrentUserResponse(BaseModel):
-
-    id: str
-    username: str
-
-
-class User(BaseModel):
-
-    id: Annotated[Optional[str], Field(default_factory=user_id_generator)]
-    username: str
-    password: str
-    created_on: Annotated[Optional[datetime], Field(default_factory=current_timestamp)]
 
 
 class Token(BaseModel):
