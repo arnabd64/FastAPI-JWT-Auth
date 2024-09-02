@@ -1,0 +1,13 @@
+services:
+  auth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TAG=3.11-slim-bookworm
+        - USER=authenticator
+    ports:
+      - 8000:8000/tcp
+    environment:
+      - PORT=8000
+      - SHOW_SQLALCHEMY_LOGS=false

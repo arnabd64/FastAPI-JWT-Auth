@@ -2,11 +2,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel, create_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
-
+import os
 from .schema import Users
 
 DATABASE_URL = "sqlite+aiosqlite:///user-data.db"
-async_engine = AsyncEngine(create_engine(DATABASE_URL, echo=True))
+async_engine = AsyncEngine(create_engine(DATABASE_URL, echo=bool(os.getenv('SHOW_SQLALCHEMY_LOGS', False))))
 
 
 async def create_tables():

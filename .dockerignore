@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.db
+Dockerfile
+*.md
+*.db
+docker-compose.yml
+.devcontainer
+.github
+.git
+LICENSE
