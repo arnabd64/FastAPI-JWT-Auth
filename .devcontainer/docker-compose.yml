@@ -1,0 +1,22 @@
+networks:
+  dev-net:
+    driver: bridge
+
+services:
+  devcontainer:
+    container_name: python_311
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TAG=bookworm
+        - USERNAME=vscode
+    volumes:
+      - ../..:/workspaces:cached
+    ports:
+      - 8000:8000/tcp
+    networks:
+      - dev-net
+    environment:
+      - TZ=Asia/Kolkata
+
