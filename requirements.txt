@@ -1,8 +1,6 @@
 # API
 fastapi
-uvicorn
-uvloop
-httptools
+uvicorn[standard]
 python-multipart
 
 # JWT Token
@@ -13,3 +11,4 @@ python-jose[cryptography]
 sqlmodel
 python-ulid
 aiosqlite
+asyncmy

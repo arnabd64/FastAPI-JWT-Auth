@@ -1,3 +1,10 @@
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  sql-data:
+
 services:
   auth-server:
     build:
@@ -6,8 +13,32 @@ services:
       args:
         - TAG=3.11-slim-bookworm
         - USER=authenticator
+    networks:
+      - backend
     ports:
       - 8000:8000/tcp
     environment:
+      - TZ=Asia/Kolkata
       - PORT=8000
-      - SHOW_SQLALCHEMY_LOGS=false
+      - SHOW_SQLALCHEMY_LOGS=1
+    restart: unless-stopped
+    depends_on:
+      - mysql
+
+  mysql:
+    container_name: mysql
+    image: bitnami/mysql:8.0
+    restart: unless-stopped
+    networks:
+      - backend
+    ports:
+      - 3306:3306/tcp
+    environment:
+      - TZ=Asia/Kolkata
+      - MYSQL_ROOT_USER=admin
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_USER=auth-user
+      - MYSQL_PASSWORD=auth-user-password
+      - MYSQL_DATABASE=authentication
+    volumes:
+      - sql-data:/bitnami/mysql/data

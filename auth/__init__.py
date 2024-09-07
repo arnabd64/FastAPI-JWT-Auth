@@ -1,9 +1,11 @@
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import PlainTextResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.exc import OperationalError
 
 from core.exceptions import *
 
@@ -14,7 +16,17 @@ from .services import AuthOperations, DatabaseOperations
 
 @asynccontextmanager
 async def lifespan(_app):
-    await create_tables()
+    while True:
+        try:
+            # create the tables to the database
+            await create_tables()
+            break
+
+        except OperationalError as e:
+            # if unable to connect then then retry after 10 seconds
+            print(e)
+            await asyncio.sleep(10)
+
     yield
 
 

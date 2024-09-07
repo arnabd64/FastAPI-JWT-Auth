@@ -5,15 +5,17 @@ ARG TAG=3.11-slim-python
 FROM python:${TAG}
 
 # STEP 2: install python dependencies
-COPY requirements.txt .
-RUN python3 -m pip install --progress-bar off -r requirements.txt
+ENV REQ=/tmp/requirements.txt
+COPY requirements.txt ${REQ}
+RUN python3 -m pip install --progress-bar off -r ${REQ}
 
 # STEP 3: create an user
 ARG USER=admin
-RUN useradd -m ${USERNAME}
+RUN useradd -m ${USER}
+
 # set the environment variables
 ENV USERNAME=${USER}
-ENV HOME=/home/{USERNAME}
+ENV HOME=/home/${USER}
 ENV PATH=${HOME}/.local/bin:${PATH}
 # switch user
 USER ${USERNAME}
