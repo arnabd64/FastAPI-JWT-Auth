@@ -1,11 +1,13 @@
 pipeline {
     agent any
     stages {
-        stage ("dependency") {
-            step {
-                sh "pip install -r requirements.txt"
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                # Install project dependencies from requirements.txt
+                pip install -r requirements.txt
+                '''
             }
-            
         }
 
         stage('Run Application') {
